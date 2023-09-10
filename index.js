@@ -2,7 +2,6 @@ import mysql from 'mysql2'
 import inquirer from 'inquirer'
 import AsciiTable from 'ascii-table'
 import { createSpinner } from 'nanospinner'
-import { create } from 'domain'
 
 const connectToDatabase = mysql.createConnection({ 
     host: 'localhost',
@@ -141,10 +140,12 @@ async function DeleteStudent(tableID) {
     }).then((ans) => {
         const id = ans.ID;
         connectToDatabase.query(`DELETE FROM ${tableID} WHERE id=${id}`, async (err, res) => {
+            if(err) throw err
+            else {
             console.log("Success ✅")
             await sleep()
             backToMenu()
-        })
+        }})
     })
 }
 
@@ -159,6 +160,7 @@ async function SelectTableToDeleteStudent() {
         }
     }).then((ans) => {
         const table = ans.tableID;
+        if(checkIfTableIsEmpty(table) == 0) backToMenu()
         DeleteStudent(table)
     })
 }
@@ -217,8 +219,6 @@ async function CollectStudentIdToChangeInformations() {
                         break;
                 }
                 let valueUpdate = VALUE.update
-
-                console.log(id, path, valueUpdate)
                 connectToDatabase.query(`UPDATE ${table} SET ${path}="${valueUpdate}" WHERE id=${id}`, async(err, res)=> {
                     console.log("Success ✅")
                     await sleep()
@@ -234,7 +234,7 @@ async function menuOption() {
         name: 'action',
         type: 'input',
         message: [
-            'Please choose an action\n1. Create a new Table\n2. Change Student Informations\n3. Delete Student from Database\n4. Add new Student to Database\n5. Seach a Student from Database\n6. Display Table\nYour choice is:',
+            'Please choose an action\n1. Create a new Table\n2. Change Student Informations\n3. Delete Student from Database\n4. Add new Student to Database\n5. Search a Student from Database\n6. Display Table\nYour choice is:',
         ],
         validate: (choice) => {
             if(isNaN(choice)) {
@@ -242,7 +242,7 @@ async function menuOption() {
             }
             return true;
         }
-    }).then((ans) => {
+    }).then(async (ans) => {
         const choice = ans.action;
         if(choice == 2) {
             CollectStudentIdToChangeInformations()
@@ -255,6 +255,12 @@ async function menuOption() {
         }
         if(choice == 6) {
             ShowTable();
+        }
+
+        if(choice == 1 || choice == 5) {
+            console.log("This function haven't released yet!")
+            await sleep();
+            backToMenu();
         }
     })
 }
